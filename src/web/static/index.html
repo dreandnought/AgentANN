@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-Agent BP Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "Liberation Sans",
+          sans-serif;
+        margin: 0;
+        background: #0b1020;
+        color: #e7eaf3;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid #1a2240;
+      }
+      .btns button {
+        background: #1a2240;
+        color: #e7eaf3;
+        border: 1px solid #2a3763;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+      .file-inputs {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: 20px;
+        font-size: 13px;
+      }
+      .file-inputs input[type="file"] {
+        display: none;
+      }
+      .file-inputs label {
+        background: #22305c;
+        color: #e7eaf3;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        height: calc(100vh - 58px);
+        box-sizing: border-box;
+      }
+      .panel {
+        background: #0f1730;
+        border: 1px solid #1a2240;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .panel-tall {
+        grid-row: 1 / 3;
+      }
+      .panel h2 {
+        font-size: 14px;
+        margin: 0;
+        padding: 10px 12px;
+        border-bottom: 1px solid #1a2240;
+        color: #b9c0d9;
+      }
+      #graph {
+        flex: 1;
+        min-height: 400px;
+      }
+      #inspector {
+        padding: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        overflow: auto;
+        flex: 1;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 8px;
+        margin: 6px 0;
+      }
+      .kv .k {
+        color: #9aa3c7;
+      }
+      .kv .v {
+        color: #e7eaf3;
+        word-break: break-word;
+      }
+      #metrics {
+        display: flex;
+        gap: 14px;
+        color: #b9c0d9;
+        font-size: 13px;
+      }
+      #llm-logs {
+        padding: 12px;
+        font-size: 12px;
+        font-family: monospace;
+        color: #a5d6ff;
+        background: #0b1020;
+        overflow-y: auto;
+        flex: 1;
+        white-space: pre-wrap;
+      }
+      .log-entry {
+        margin-bottom: 8px;
+        border-bottom: 1px dashed #1a2240;
+        padding-bottom: 8px;
+      }
+      .log-entry.forward { color: #38bdf8; }
+      .log-entry.backward { color: #fb923c; }
+      .log-error { color: #ef4444; }
+      #w-json {
+        margin-top: 8px;
+        padding: 8px;
+        background: #0b1020;
+        border-radius: 6px;
+        max-height: 200px;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="display: flex; align-items: center">
+        <div style="font-weight: 650">Multi-Agent BP Monitor</div>
+        <div class="file-inputs">
+          <label>
+            上传权重 JSON
+            <input type="file" id="inp-weights" accept=".json" />
+          </label>
+          <div style="display:flex; gap: 4px; align-items: center; background: #22305c; padding: 6px 12px; border-radius: 6px;">
+            <span>鸢尾花特征:</span>
+            <input type="number" id="f1" step="0.1" value="5.1" style="width: 48px; background: #0f1730; color: #fff; border: 1px solid #1a2240; padding: 2px 4px;" title="花萼长度" />
+            <input type="number" id="f2" step="0.1" value="3.5" style="width: 48px; background: #0f1730; color: #fff; border: 1px solid #1a2240; padding: 2px 4px;" title="花萼宽度" />
+            <input type="number" id="f3" step="0.1" value="1.4" style="width: 48px; background: #0f1730; color: #fff; border: 1px solid #1a2240; padding: 2px 4px;" title="花瓣长度" />
+            <input type="number" id="f4" step="0.1" value="0.2" style="width: 48px; background: #0f1730; color: #fff; border: 1px solid #1a2240; padding: 2px 4px;" title="花瓣宽度" />
+            <button id="btn-infer" style="margin-left: 8px; background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">推理</button>
+          </div>
+        </div>
+      </div>
+      <div id="metrics">
+        <div>Step: <span id="m-step">-</span></div>
+        <div>Loss: <span id="m-loss">-</span></div>
+        <div>Acc: <span id="m-acc">-</span></div>
+        <div>Label/Pred: <span id="m-lp">-</span></div>
+      </div>
+      <div class="btns">
+        <button id="btn-start">开始</button>
+        <button id="btn-pause">暂停</button>
+        <button id="btn-reset">重置</button>
+      </div>
+    </header>
+    <main>
+      <section class="panel panel-tall">
+        <h2>网络拓扑与传播状态</h2>
+        <div id="graph"></div>
+      </section>
+      <section class="panel">
+        <h2>Agent 探针 (点击左侧节点查看权重)</h2>
+        <div id="inspector">
+          <div class="kv"><div class="k">选中节点</div><div class="v" id="i-id">-</div></div>
+          <div class="kv"><div class="k">状态</div><div class="v" id="i-state">-</div></div>
+          <div class="kv"><div class="k">错误</div><div class="v" id="i-err">-</div></div>
+          <div id="w-json">等待点击节点...</div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>LLM 交互日志</h2>
+        <div id="llm-logs"></div>
+      </section>
+    </main>
+    <script src="/static/app.js?v=2.1"></script>
+  </body>
+</html>

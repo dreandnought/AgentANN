@@ -1,0 +1,22 @@
+{
+  "network": {
+    "input_dim": 4,
+    "hidden_layer": {
+      "layer_name": "Hidden",
+      "agents": ["H0", "H1", "H2", "H3", "H4", "H5", "H6", "H7"],
+      "activation": "relu",
+      "input_source": "coordinator",
+      "output_targets": ["O0", "O1", "O2"]
+    },
+    "output_layer": {
+      "layer_name": "Output",
+      "agents": ["O0", "O1", "O2"],
+      "activation": "sigmoid",
+      "input_source": ["H0", "H1", "H2", "H3", "H4", "H5", "H6", "H7"],
+      "output_targets": "coordinator"
+    }
+  },
+  "hyperparameters": {
+    "learning_rate": 0.01
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "allow_mock_without_key": false,
+  "max_concurrent_requests": 1,
+  "api_provider": "openai",
+  "base_url": "https://api.scnet.cn/api/llm/v1",
+  "api_key_env": "LLM_API_KEY",
+  "model_name": "MiniMax-M2.5",
+  "temperature": 0.0,
+  "max_tokens": 20480,
+  "request_timeout_seconds": 60.0,
+  "system_prompts_path": "agent_prompts.md",
+  "retry_strategy": {
+    "max_retries": 3,
+    "backoff_seconds": 1.0
+  }
+}
