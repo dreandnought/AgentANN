@@ -1,5 +1,5 @@
 # Multi-Agent BP Network (LLM Agent Cluster)
-
+采用多个Agent组网，暴力模拟人工神经网络，采用agent背后的大模型代替本地gpu和cpu完成所有传播过程中的数值计算，目前已实现鸢尾花识别。
 ## 目录
 - `config/llm_config.json`: 大模型 API 接入配置（API Key 通过环境变量提供）
 - `config/network_config.json`: 网络结构配置（H0-H7 / O0-O2）
